@@ -1,7 +1,7 @@
 package exceptions;
 
-public class ePrescripCodeException extends RuntimeException {
-  public ePrescripCodeException(String message) {
-    super(message);
-  }
+public class ePrescripCodeException extends Exception {
+    public ePrescripCodeException(String message) {
+        super(message);
+    }
 }
