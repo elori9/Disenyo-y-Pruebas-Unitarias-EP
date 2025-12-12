@@ -17,6 +17,9 @@ public class HealthCardIDTest {
         });
     }
 
+
+    
+
     @Test
     @DisplayName("Test throws HealthCardIDException for non 16 characters length")
     void invalidLength() {
