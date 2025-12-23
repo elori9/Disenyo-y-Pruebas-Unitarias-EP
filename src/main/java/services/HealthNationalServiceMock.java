@@ -53,7 +53,10 @@ public class HealthNationalServiceMock implements HealthNationalService {
     }
 
     @Override
-    public MedicalPrescription sendHistoryAndPrescription(HealthCardID cip, MedicalHistory hce, String illness, MedicalPrescription mPresc) throws ConnectException, HealthCardIDException, AnyCurrentPrescriptionException, NotCompletedMedicalPrescription, MedicalPrescriptionException, ePrescripCodeException {
+    public MedicalPrescription sendHistoryAndPrescription(HealthCardID cip, MedicalHistory hce, String illness, MedicalPrescription mPresc)
+            throws ConnectException, HealthCardIDException, AnyCurrentPrescriptionException,
+            NotCompletedMedicalPrescription, MedicalPrescriptionException, ePrescripCodeException {
+
         if (failWithConnectException) {
             throw new ConnectException("Connection error");
         }
