@@ -6,17 +6,17 @@ import data.HealthCardID;
 
 public interface HealthNationalService {
     MedicalHistory getMedicalHistory(HealthCardID cip)
-            throws ConnectException, HealthCardIDException;
+            throws ConnectException, HealthCardIDException, IncorrectParametersException;
 
     MedicalPrescription getMedicalPrescription(HealthCardID cip, String illness)
-            throws ConnectException, HealthCardIDException, AnyCurrentPrescriptionException;
+            throws ConnectException, HealthCardIDException, AnyCurrentPrescriptionException, MedicalPrescriptionException;
 
     MedicalPrescription sendHistoryAndPrescription(HealthCardID cip,
                                                    MedicalHistory hce, String illness, MedicalPrescription mPresc)
             throws ConnectException, HealthCardIDException, AnyCurrentPrescriptionException,
-            NotCompletedMedicalPrescription, MedicalPrescriptionException;
-    // Internal operation
+            NotCompletedMedicalPrescription, MedicalPrescriptionException, ePrescripCodeException;
 
+    // Internal operation
     MedicalPrescription generateTreatmCodeAndRegister(MedicalPrescription ePresc)
-            throws ConnectException;
+            throws ConnectException, ePrescripCodeException, MedicalPrescriptionException;
 }
