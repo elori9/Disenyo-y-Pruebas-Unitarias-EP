@@ -30,13 +30,27 @@ class MedicalHistoryTest {
     }
 
     @Test
+    @DisplayName("Test verifies that the constructor throws exception for invalid membership number")
+    void testConstructorThrowsExceptionForInvalidDoctor() throws HealthCardIDException {
+        HealthCardID cip = new HealthCardID("123456789ABCDEFG");
+
+        assertThrows(IncorrectParametersException.class, () -> {
+            new MedicalHistory(cip, -5);
+        });
+
+        assertThrows(IncorrectParametersException.class, () -> {
+            new MedicalHistory(cip, 0);
+        });
+    }
+
+    @Test
     @DisplayName("Test verifies the addition of annotations to the history")
     void testAddAnnotations() throws HealthCardIDException, IncorrectParametersException {
         HealthCardID cip = new HealthCardID("987654321ZYXWVUT");
         MedicalHistory medicalHistory = new MedicalHistory(cip, 33);
 
-        String nota1 = "Paciente con fiebre";
-        String nota2 = "Se receta paracetamol.";
+        String nota1 = "Patient with fever";
+        String nota2 = "Paracetamol prescribed.";
 
         medicalHistory.addMedicalHistoryAnnotations(nota1);
         assertEquals(nota1, medicalHistory.getHistory());
