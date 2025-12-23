@@ -2,6 +2,8 @@ package data;
 
 import exceptions.ProductIDException;
 import exceptions.SuggestionException;
+import medicalconsultation.FqUnit;
+import medicalconsultation.dayMoment;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,58 +19,53 @@ class SuggestionTest {
     }
 
     @Test
-    @DisplayName("Test throws SuggestionException for null productID")
-    void nullProdID() {
-        Assertions.assertThrows(SuggestionException.class, () -> {
-            suggestion = new Suggestion(null, "indication", ActionType.ADD, 1);
-        });
-    }
-
-    @Test
-    @DisplayName("Test throws SuggestionException for null indication")
-    void nullIndication() {
-        Assertions.assertThrows(SuggestionException.class, () -> {
-            suggestion = new Suggestion(productID, null, ActionType.DELETE, 1);
-        });
-    }
-
-    @Test
     @DisplayName("Test throws SuggestionException for null ActionType")
     void nullActionType() {
         Assertions.assertThrows(SuggestionException.class, () -> {
-            suggestion = new Suggestion(productID, "indication", null, 1);
+            new Suggestion(null, productID, dayMoment.DURINGBREAKFAST, 1.0, 1.0, 1.0, FqUnit.DAY, "Instr");
         });
     }
 
     @Test
-    @DisplayName("Test throws SuggestionException for negative dose")
-    void negativeDose() {
+    @DisplayName("Test throws SuggestionException for null ProductID")
+    void nullProductID() {
         Assertions.assertThrows(SuggestionException.class, () -> {
-            suggestion = new Suggestion(productID, "indication", ActionType.DELETE, -1);
+            new Suggestion(ActionType.ADD, null, dayMoment.AFTERMEALS, 1.0, 1.0, 1.0, FqUnit.DAY, "Instr");
         });
     }
 
     @Test
-    @DisplayName("Test verifies that dose 0 is valid")
-    void zeroDoseIsValid() {
+    @DisplayName("Test accepts nulls in optional fields")
+    void optionalFieldsCanBeNull() {
         Assertions.assertDoesNotThrow(() -> {
-            new Suggestion(productID, "indication", ActionType.DELETE, 0);
+            new Suggestion(ActionType.DELETE, productID, null, null, null, null, null, null);
         });
     }
 
     @Test
-    @DisplayName("Valid suggestion check attributes")
+    @DisplayName("Valid suggestion check attributes and tabular format")
     void validSuggestion() throws SuggestionException {
-        suggestion = new Suggestion(productID, "indication", ActionType.ADD, 1.0);
+        suggestion = new Suggestion(
+                ActionType.ADD,
+                productID,
+                dayMoment.AFTERMEALS,
+                15.0,
+                1.0,
+                1.0,
+                FqUnit.DAY,
+                "instructions"
+        );
 
-        // toString method
-        String expectedString = "- ProductID{product code='123456789012'}\tADD\tindication\tNew dose: 1.0\n";
+        String expectedString = "| ADD | ProductID{product code='123456789012'} | Day moment: AFTERMEALS       | Duration: 15.0  | Dose: 1.0   | Freq: 1.0   | Freq unit: DAY   | instructions";
+        System.out.println(expectedString);
         Assertions.assertEquals(expectedString, suggestion.toString());
 
-        // getters
-        Assertions.assertEquals(productID, suggestion.getProductID());
-        Assertions.assertEquals("indication", suggestion.getIndication());
+        // 3. Verificar Getters
         Assertions.assertEquals(ActionType.ADD, suggestion.getActionType());
-        Assertions.assertEquals(1.0, suggestion.getNewDose());
+        Assertions.assertEquals(productID, suggestion.getProductID());
+        Assertions.assertEquals(dayMoment.AFTERMEALS, suggestion.getDayMoment());
+        Assertions.assertEquals(15.0, suggestion.getDuration());
+        Assertions.assertEquals(1.0, suggestion.getDose());
+        Assertions.assertEquals("instructions", suggestion.getInstructions());
     }
 }
