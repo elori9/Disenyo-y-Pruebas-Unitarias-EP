@@ -6,36 +6,29 @@ import exceptions.BadPromptException;
 import exceptions.AIException;
 
 import data.Suggestion;
-import exceptions.ProductIDException;
-import exceptions.SuggestionException;
 import medicalconsultation.FqUnit;
 import medicalconsultation.dayMoment;
+import services.interfaces.DecisionMakingAI;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 
-public class DecisionMakingAIMock {
+public class DecisionMakingAIMock implements DecisionMakingAI {
 
-    private boolean isInitialized = false;
+    private boolean failWithAIException = false;
+    private boolean failWithsuggestions = false;
 
-    public void initDecisionMakingIA() throws AIException {
-
-        //Simulate and error for the exception
-        if (Math.random() < 0.05) {
+    @Override
+    public void initDecisionMakingAI() throws AIException {
+        if (failWithAIException) {
             throw new AIException("Problems with the invocation of the IA.");
         }
-
-        this.isInitialized = true;
     }
 
-
+    @Override
     public String getSuggestions(String prompt) throws BadPromptException {
-        if (!isInitialized) {
-            throw new RuntimeException("The IA is not initialized.");
-        }
-
         if (prompt == null) {
             throw new BadPromptException("The prompt is not clear or right");
         }
@@ -47,12 +40,13 @@ public class DecisionMakingAIMock {
         };
 
         Random rand = new Random();
-        int RandomIndex = rand.nextInt(PossibleAnswers.length);
+        int randomIndex = rand.nextInt(PossibleAnswers.length);
 
-        return PossibleAnswers[RandomIndex];
+        return PossibleAnswers[randomIndex];
     }
 
-    public List<Suggestion> parseSuggest(String aiAnswer) throws ProductIDException, SuggestionException {
+    @Override
+    public List<Suggestion> parseSuggest(String aiAnswer) {
         List<Suggestion> list = new ArrayList<>();
         if (aiAnswer == null || aiAnswer.isEmpty()) return list;
 
@@ -72,24 +66,44 @@ public class DecisionMakingAIMock {
             default -> null;
         };
 
-        ProductID id = new ProductID(data[1]);
+        try {
+            ProductID id = new ProductID(data[1]);
 
-        dayMoment mom = null;
-        Double dur = null, dose = null, freq = null;
-        FqUnit unit = null;
-        String instr = null;
+            dayMoment mom = null;
+            Double dur = null, dose = null, freq = null;
+            FqUnit unit = null;
+            String instr = null;
 
-        if (action != ActionType.DELETE) {
-            if (!data[2].isEmpty()) mom = dayMoment.valueOf(data[2]);
-            if (!data[3].isEmpty()) dur = Double.valueOf(data[3]);
-            if (!data[4].isEmpty()) dose = Double.valueOf(data[4]);
-            if (!data[5].isEmpty()) freq = Double.valueOf(data[5]);
-            if (!data[6].isEmpty()) unit = FqUnit.valueOf(data[6]);
-            if (data.length > 7) instr = data[7];
+            if (action != ActionType.DELETE) {
+                if (!data[2].isEmpty()) mom = dayMoment.valueOf(data[2]);
+                if (!data[3].isEmpty()) dur = Double.valueOf(data[3]);
+                if (!data[4].isEmpty()) dose = Double.valueOf(data[4]);
+                if (!data[5].isEmpty()) freq = Double.valueOf(data[5]);
+                if (!data[6].isEmpty()) unit = FqUnit.valueOf(data[6]);
+                if (data.length > 7) instr = data[7];
+            }
+
+            list.add(new Suggestion(action, id, mom, dur, dose, freq, unit, instr));
+
+        } catch (Exception e) {
+            // Shouldn't happen
+            return new ArrayList<>();
         }
 
-        list.add(new Suggestion(action, id, mom, dur, dose, freq, unit, instr));
+        if (failWithsuggestions) {
+            return new ArrayList<>();
+        }
 
         return list;
+    }
+
+    // Setters
+
+    public void setFailWithAIException(boolean failWithAIException) {
+        this.failWithAIException = failWithAIException;
+    }
+
+    public void setFailWithsuggestions(boolean failWithsuggestions) {
+        this.failWithsuggestions = failWithsuggestions;
     }
 }
