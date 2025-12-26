@@ -53,9 +53,9 @@ public class Suggestion {
         // If smt is null will be '-'
         String pid = productID.toString();
         String mom = (dayMoment != null) ? dayMoment.toString() : "-";
-        String dur = (duration == 0) ? "-" : duration.toString();
-        String dos = (dose == 0) ? "-" : dose.toString();
-        String freq = (frequency == 0) ? "-" : frequency.toString();
+        String dur = (duration == null) ? "-" : duration.toString();
+        String dos = (dose == null) ? "-" : dose.toString();
+        String freq = (frequency == null) ? "-" : frequency.toString();
         String unit = (fqUnit != null) ? fqUnit.toString() : "-";
         String instr = (instructions != null) ? instructions : "-";
 

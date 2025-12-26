@@ -28,11 +28,12 @@ public class ConsultationTerminal {
     private boolean callDecisionMakeAIStarted = false;
     private boolean aiConversationEnded = false;
     private boolean aiRecommendations = false;
+    private boolean medicineEntered = false;
+    private boolean prescriptionLineModified = false;
 
 
     /**
      * The constructor of the class
-     *
      */
     public ConsultationTerminal() {
         suggestions = new ArrayList<>();
@@ -100,7 +101,6 @@ public class ConsultationTerminal {
     }
 
     /**
-     *
      * @param prompt the prompt
      * @throws ProceduralException if there was not initialized the call decision with ia
      * @throws BadPromptException  if the prompt is not enough clear
@@ -144,8 +144,27 @@ public class ConsultationTerminal {
         if (!aiRecommendations)
             throw new ProceduralException("Not extracted the guidelines form suggestion");
         medicalPrescription.addLine(prodID, instruc);
+        medicineEntered = true;
         showPrescriptionCompleted();
     }
+
+    /**
+     * Modify the line of the prescription of the prodID, replacing it for the dose for the new dose
+     *
+     * @param prodID  the productID
+     * @param newDose the new Dose
+     * @throws ProductNotInPrescriptionException if the product does not from part of the treatment
+     * @throws ProceduralException               if there was not entered the Medicine with Guidelines
+     */
+    public void modifyDoseInLine(ProductID prodID, float newDose)
+            throws ProductNotInPrescriptionException, MedicalPrescriptionException, PosologyException, ProceduralException {
+       if(!medicineEntered)
+           throw new ProceduralException("There was not entered the Medicine with Guidelines");
+        medicalPrescription.modifyDoseInLine(prodID, newDose);
+        prescriptionLineModified = true;
+        showPrescriptionLineModified();
+    }
+
 
     // Helpers, those will be modified as needed on the real implementation
 
@@ -178,6 +197,10 @@ public class ConsultationTerminal {
 
     private void showPrescriptionCompleted() {
         System.out.println("Prescription line modification completed");
+    }
+
+    private void showPrescriptionLineModified(){
+        System.out.println("Prescription line modified");
     }
 
     // Injection setters

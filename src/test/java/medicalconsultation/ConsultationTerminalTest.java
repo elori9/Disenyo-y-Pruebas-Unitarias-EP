@@ -118,6 +118,21 @@ class ConsultationTerminalTest {
         assertDoesNotThrow(() -> consultationTerminal.enterMedicineWithGuidelines(productID, instructions));
     }
 
+    @Test
+    @DisplayName("test modify dose in line: step 8")
+    void modifyDoseInLine() throws Exception {
+        // Step 1, 2, 3, 4, 5, 6, 7
+        consultationTerminal.initRevision(healthCardID, illness);
+        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
+        consultationTerminal.initMedicalPrescriptionEdition();
+        consultationTerminal.callDecisionMakingAI();
+        consultationTerminal.askAIForSuggest("prompt");
+        consultationTerminal.extractGuidelinesFromSugg();
+        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
+        // Test
+        assertDoesNotThrow(() -> consultationTerminal.modifyDoseInLine(productID, 2));
+    }
+
     // ---- EXCEPTIONS TESTS ----
 
     @Test
@@ -321,7 +336,7 @@ class ConsultationTerminalTest {
     }
 
     @Test
-    @DisplayName("Check other excpetions from enter Medicine With Guidelines")
+    @DisplayName("Check other exceptions from enter Medicine With Guidelines")
     void enterMedicineWithGuidelinesExceptions() throws Exception {
         consultationTerminal.initRevision(healthCardID, illness);
         consultationTerminal.enterMedicalAssessmentInHistory("assessment");
@@ -342,4 +357,62 @@ class ConsultationTerminalTest {
         );
     }
 
+    @Test
+    @DisplayName("Check all procedural exceptions from modify dose in line")
+    void enterModifyDoseInLineProceduralExceptions() throws Exception {
+        // Procedural exception before nothing
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+
+        // Procedural exception before one step
+        consultationTerminal.initRevision(healthCardID, "illness");
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+        // Procedural exception before two steps
+        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+        // Procedural exception before three steps
+        consultationTerminal.initMedicalPrescriptionEdition();
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+        // Procedural exception before four steps
+        consultationTerminal.callDecisionMakingAI();
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+        // Procedural exception before five steps
+        consultationTerminal.askAIForSuggest("prompt");
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+        // Procedural exception before six steps
+        consultationTerminal.extractGuidelinesFromSugg();
+        assertThrows(ProceduralException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID, 2)
+        );
+    }
+
+    @Test
+    @DisplayName("Check other exceptions from enter modify dose in line")
+    void enterModifyDoseInLineExceptions() throws Exception {
+        consultationTerminal.initRevision(healthCardID, illness);
+        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
+        consultationTerminal.initMedicalPrescriptionEdition();
+        consultationTerminal.callDecisionMakingAI();
+        consultationTerminal.askAIForSuggest("prompt");
+        consultationTerminal.extractGuidelinesFromSugg();
+        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
+
+        ProductID productID1 = new ProductID("012345678901");
+        // Product Not In Prescription Exception
+        assertThrows(ProductNotInPrescriptionException.class, () ->
+                consultationTerminal.modifyDoseInLine(productID1, 2)
+        );
+
+    }
 }
