@@ -22,20 +22,9 @@ public class ConsultationTerminal {
     private List<Suggestion> suggestions;
     private String lastAIAnswer;
 
+    // States
+    private States currentState = States.REVISION_NO_STARTED;
 
-    // Booleans for states
-    private boolean assessmentEntered = false;
-    private boolean medicalPrescriptionStarted = false;
-    private boolean callDecisionMakeAIStarted = false;
-    private boolean aiConversationEnded = false;
-    private boolean aiRecommendations = false;
-    private boolean medicineEntered = false;
-    private boolean prescriptionLineModified = false;
-    private boolean prescriptionLineRemoved = false;
-    private boolean prescriptionReadyToSign = false;
-    private boolean medicalPrescriptionEditionEnded = false;
-    private boolean prescriptionValidComplete = false;
-    private boolean historyAndPrescriptionSent = false;
 
 
     /**
@@ -62,6 +51,7 @@ public class ConsultationTerminal {
         this.cip = cip;
         this.medicalHistory = healthNationalService.getMedicalHistory(cip);
         this.medicalPrescription = healthNationalService.getMedicalPrescription(cip, illness);
+        currentState = States.REVISION_STARTED;
         showHCE();
         showPrescription();
     }
@@ -73,9 +63,9 @@ public class ConsultationTerminal {
      * @throws ProceduralException if the prescription has not been loaded
      */
     public void enterMedicalAssessmentInHistory(String assess) throws ProceduralException {
-        if (medicalPrescription == null) throw new ProceduralException("Medical prescription not initialized");
+        if (medicalPrescription == null && currentState != States.REVISION_STARTED) throw new ProceduralException("Medical prescription not initialized");
         medicalHistory.addMedicalHistoryAnnotations(assess);
-        assessmentEntered = true;
+        currentState = States.ASSESSMENT_ENTERED;
         showHCE();
     }
 
@@ -85,10 +75,10 @@ public class ConsultationTerminal {
      * @throws ProceduralException if there was not entered the medical assessment in history
      */
     public void initMedicalPrescriptionEdition() throws ProceduralException {
-        if (!assessmentEntered) {
+        if (currentState != States.ASSESSMENT_ENTERED) {
             throw new ProceduralException("Medical prescription not initialized");
         }
-        medicalPrescriptionStarted = true;
+        currentState = States.PRESCRIPTION_EDITING;
         showPrescriptionEdition();
     }
 
@@ -99,10 +89,10 @@ public class ConsultationTerminal {
      * @throws ProceduralException if there was not initiated the medical prescription edition
      */
     public void callDecisionMakingAI() throws AIException, ProceduralException {
-        if (!medicalPrescriptionStarted)
+        if (currentState != States.PRESCRIPTION_EDITING)
             throw new ProceduralException("Not initiated the medical prescription edition");
         ai.initDecisionMakingAI();
-        callDecisionMakeAIStarted = true;
+        currentState = States.AI_CALLED;
         showIAHello();
     }
 
@@ -112,11 +102,11 @@ public class ConsultationTerminal {
      * @throws BadPromptException  if the prompt is not enough clear
      */
     public void askAIForSuggest(String prompt) throws ProceduralException, BadPromptException {
-        if (!callDecisionMakeAIStarted)
+        if (currentState != States.AI_CALLED)
             throw new ProceduralException("Not called the decision making ai");
         lastAIAnswer = ai.getSuggestions(prompt);
         showIASuggestionsTab();
-        aiConversationEnded = true;
+        currentState = States.AI_ANSWERED;
     }
 
     /**
@@ -126,13 +116,13 @@ public class ConsultationTerminal {
      * @throws BadPromptException  if the prompt is not enough clear
      */
     public void extractGuidelinesFromSugg() throws ProceduralException, BadPromptException {
-        if (!aiConversationEnded)
+        if (currentState != States.AI_ANSWERED)
             throw new ProceduralException("Not asked for the ai suggest");
         suggestions = ai.parseSuggest(lastAIAnswer);
         if (suggestions == null || suggestions.isEmpty())
             throw new BadPromptException("The prompt provided is not clear for the AI, so there where no suggestions found");
         showIASuggestions();
-        aiRecommendations = true;
+        currentState = States.GUIDELINES_EXTRACTED;
     }
 
     /**
@@ -147,10 +137,11 @@ public class ConsultationTerminal {
     public void enterMedicineWithGuidelines(ProductID prodID, String[] instruc)
             throws ProductAlreadyInPrescriptionException, IncorrectTakingGuidelinesException, ProceduralException,
             MedicalPrescriptionException, PosologyException, MedicalPrescriptionLineException {
-        if (!aiRecommendations)
+        // Let introduce > 1 medicine (Although on DSS its just one)
+        if (currentState != States.GUIDELINES_EXTRACTED && currentState != States.MEDICINE_ENTERED)
             throw new ProceduralException("Not extracted the guidelines form suggestion");
         medicalPrescription.addLine(prodID, instruc);
-        medicineEntered = true;
+        currentState = States.MEDICINE_ENTERED;
         showPrescriptionCompleted();
     }
 
@@ -164,10 +155,10 @@ public class ConsultationTerminal {
      */
     public void modifyDoseInLine(ProductID prodID, float newDose)
             throws ProductNotInPrescriptionException, MedicalPrescriptionException, PosologyException, ProceduralException {
-        if (!medicineEntered)
+        if (currentState != States.MEDICINE_ENTERED)
             throw new ProceduralException("There was not entered the Medicine with Guidelines");
         medicalPrescription.modifyDoseInLine(prodID, newDose);
-        prescriptionLineModified = true;
+        currentState = States.DOSE_MODIFIED;
         showPrescriptionLineModified();
     }
 
@@ -180,10 +171,10 @@ public class ConsultationTerminal {
      */
     public void removeLine(ProductID prodID) throws
             ProductNotInPrescriptionException, MedicalPrescriptionException, ProceduralException {
-        if (!prescriptionLineModified)
+        if (currentState != States.DOSE_MODIFIED)
             throw new ProceduralException("There was not modified the dose in line");
         medicalPrescription.removeLine(prodID);
-        prescriptionLineRemoved = true;
+        currentState = States.LINE_REMOVED;
         showRemovedLine();
     }
 
@@ -196,7 +187,7 @@ public class ConsultationTerminal {
      */
     public void enterTreatmentEndingDate(Date date) throws
             IncorrectEndingDateException, ProceduralException, MedicalPrescriptionException {
-        if (!prescriptionLineRemoved)
+        if (currentState != States.LINE_REMOVED)
             throw new ProceduralException("There was not a remove line");
 
         if (incorrectDate(date))
@@ -204,7 +195,7 @@ public class ConsultationTerminal {
 
         medicalPrescription.setEndDate(date);
 
-        prescriptionReadyToSign = true;
+        currentState = States.TREATMENT_ENTERED;
         showMedicalPrescriptionReadyToSign();
     }
 
@@ -212,10 +203,10 @@ public class ConsultationTerminal {
      * @throws ProceduralException if there is no treatment ending date
      */
     public void finishMedicalPrescriptionEdition() throws ProceduralException {
-        if (!prescriptionReadyToSign)
+        if (currentState != States.TREATMENT_ENTERED)
             throw new ProceduralException("There is not treatment ending date");
 
-        medicalPrescriptionEditionEnded = true;
+        currentState = States.MEDICAL_PRESCRIPTION_FINISHED;
         showHCEAndEReceiptRead();
     }
 
@@ -226,14 +217,14 @@ public class ConsultationTerminal {
      * @throws ProceduralException if the prescription edition has not ended
      */
     public void stampeeSignature() throws eSignatureException, ProceduralException {
-        if (!medicalPrescriptionEditionEnded)
+        if (currentState != States.MEDICAL_PRESCRIPTION_FINISHED)
             throw new ProceduralException("There was not enter a treatment ending date");
         if (this.doctorSignature == null)
             throw new eSignatureException("There is an error with the eSignature");
 
         doctorSignature.getDigitalSignature();
 
-        prescriptionValidComplete = true;
+        currentState = States.SIGNATURE_STAMPED;
 
         showMedicalPrescriptionPendingValidation();
     }
@@ -253,14 +244,14 @@ public class ConsultationTerminal {
             throws ConnectException, HealthCardIDException,
             AnyCurrentPrescriptionException,
             NotCompletedMedicalPrescription, ProceduralException, MedicalPrescriptionException, ePrescripCodeException {
-        if (!prescriptionValidComplete)
+        if (currentState != States.SIGNATURE_STAMPED)
             throw new ProceduralException("There wasn't a signature stamped");
 
         // Send the medical prescription to the HNS and replace it
         this.medicalPrescription = healthNationalService.sendHistoryAndPrescription(
                 cip, medicalHistory, medicalPrescription.getIllness(), medicalPrescription);
 
-        historyAndPrescriptionSent = true;
+        currentState = States.HISTORY_AND_PRESCRIPTION_SENT;
 
         showPrescriptionValidAndComplete();
     }
@@ -271,8 +262,9 @@ public class ConsultationTerminal {
      * @throws ProceduralException if history wasn't send
      */
     public void printMedicalPrescrip() throws ProceduralException {
-        if (!historyAndPrescriptionSent)
+        if (currentState != States.HISTORY_AND_PRESCRIPTION_SENT)
             throw new ProceduralException("History wasn't send");
+        currentState = States.MEDICAL_PRESCRIPTION_PRINTED;
         sendToPrintMedicalPrescription();
     }
 
