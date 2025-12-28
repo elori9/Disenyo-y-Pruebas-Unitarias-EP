@@ -5,7 +5,6 @@ import exceptions.*;
 import services.interfaces.DecisionMakingAI;
 import services.interfaces.HealthNationalService;
 
-import java.security.Signature;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,6 +34,8 @@ public class ConsultationTerminal {
     private boolean prescriptionLineRemoved = false;
     private boolean prescriptionReadyToSign = false;
     private boolean medicalPrescriptionEditionEnded = false;
+    private boolean prescriptionValidComplete = false;
+    private boolean historyAndPrescriptionSent = false;
 
 
     /**
@@ -114,7 +115,7 @@ public class ConsultationTerminal {
         if (!callDecisionMakeAIStarted)
             throw new ProceduralException("Not called the decision making ai");
         lastAIAnswer = ai.getSuggestions(prompt);
-        showIAsuggestionsTab();
+        showIASuggestionsTab();
         aiConversationEnded = true;
     }
 
@@ -130,7 +131,7 @@ public class ConsultationTerminal {
         suggestions = ai.parseSuggest(lastAIAnswer);
         if (suggestions == null || suggestions.isEmpty())
             throw new BadPromptException("The prompt provided is not clear for the AI, so there where no suggestions found");
-        showIAsuggestions();
+        showIASuggestions();
         aiRecommendations = true;
     }
 
@@ -215,7 +216,7 @@ public class ConsultationTerminal {
             throw new ProceduralException("There is not treatment ending date");
 
         medicalPrescriptionEditionEnded = true;
-        showHCEandEReceiptRead();
+        showHCEAndEReceiptRead();
     }
 
     /**
@@ -232,9 +233,47 @@ public class ConsultationTerminal {
 
         doctorSignature.getDigitalSignature();
 
-        medicalPrescriptionEditionEnded = true;
+        prescriptionValidComplete = true;
 
         showMedicalPrescriptionPendingValidation();
+    }
+
+
+    /**
+     * Transmit the hce and medical prescription of the illness of the patient to the HNS,
+     * if all is correct, the HNS will generate a treatment code on the medical prescription
+     *
+     * @throws ConnectException                if the connection with the HNS fails
+     * @throws HealthCardIDException           if the HealthCardID is not registered on the HNS
+     * @throws AnyCurrentPrescriptionException if the patient doesn't have prescription associated to the illness
+     * @throws NotCompletedMedicalPrescription if the HNS can't validate the prescription
+     * @throws ProceduralException             if there wasn't a signature stamped
+     */
+    public void sendHistoryAndPrescription()
+            throws ConnectException, HealthCardIDException,
+            AnyCurrentPrescriptionException,
+            NotCompletedMedicalPrescription, ProceduralException, MedicalPrescriptionException, ePrescripCodeException {
+        if (!prescriptionValidComplete)
+            throw new ProceduralException("There wasn't a signature stamped");
+
+        // Send the medical prescription to the HNS and replace it
+        this.medicalPrescription = healthNationalService.sendHistoryAndPrescription(
+                cip, medicalHistory, medicalPrescription.getIllness(), medicalPrescription);
+
+        historyAndPrescriptionSent = true;
+
+        showPrescriptionValidAndComplete();
+    }
+
+    /**
+     * Prints the medical prescription
+     *
+     * @throws ProceduralException if history wasn't send
+     */
+    public void printMedicalPrescrip() throws ProceduralException {
+        if (!historyAndPrescriptionSent)
+            throw new ProceduralException("History wasn't send");
+        sendToPrintMedicalPrescription();
     }
 
 
@@ -247,6 +286,7 @@ public class ConsultationTerminal {
 
         return !date.after(today);
     }
+
 
     // Helpers, those will be modified as needed on the real implementation
 
@@ -266,11 +306,11 @@ public class ConsultationTerminal {
         System.out.println("IA says HI...");
     }
 
-    private void showIAsuggestionsTab() {
+    private void showIASuggestionsTab() {
         System.out.println("AI suggestion: " + lastAIAnswer);
     }
 
-    private void showIAsuggestions() {
+    private void showIASuggestions() {
         System.out.println("----------IA SUGGESTIONS----------");
         for (Suggestion suggestion : suggestions)
             System.out.println(suggestion.toString());
@@ -293,7 +333,7 @@ public class ConsultationTerminal {
         System.out.println("Prescription ready to firm");
     }
 
-    private void showHCEandEReceiptRead() {
+    private void showHCEAndEReceiptRead() {
         System.out.println("Screen of just reading of HCE and e-receipt");
     }
 
@@ -301,9 +341,15 @@ public class ConsultationTerminal {
         System.out.println("Medical prescription is waiting fot validation");
     }
 
-    private void showMedicalPrescription() {
-        System.out.println(this.medicalPrescription.toString());
+    public void showPrescriptionValidAndComplete() {
+        System.out.println("Medical prescription valid and complete:");
+        showPrescription();
     }
+
+    public void sendToPrintMedicalPrescription() {
+        System.out.println("printing medical prescription...");
+    }
+
 
     // Injection setters
 
@@ -314,6 +360,7 @@ public class ConsultationTerminal {
     public void setHealthNationalService(HealthNationalService healthNationalService) {
         this.healthNationalService = healthNationalService;
     }
+
 
     // Getters
 
@@ -329,7 +376,9 @@ public class ConsultationTerminal {
         return medicalHistory;
     }
 
+
     // Setters
+
     public void setDoctorSignature(DigitalSignature digitalSignature) {
         this.doctorSignature = digitalSignature;
     }
