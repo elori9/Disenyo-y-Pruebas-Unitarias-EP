@@ -60,7 +60,7 @@ class SuggestionTest {
         System.out.println(expectedString);
         Assertions.assertEquals(expectedString, suggestion.toString());
 
-        // 3. Verificar Getters
+
         Assertions.assertEquals(ActionType.ADD, suggestion.getActionType());
         Assertions.assertEquals(productID, suggestion.getProductID());
         Assertions.assertEquals(dayMoment.AFTERMEALS, suggestion.getDayMoment());

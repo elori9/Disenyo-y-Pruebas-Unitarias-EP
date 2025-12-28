@@ -5,7 +5,9 @@ import exceptions.*;
 import services.interfaces.DecisionMakingAI;
 import services.interfaces.HealthNationalService;
 
+import java.security.Signature;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class ConsultationTerminal {
@@ -30,6 +32,9 @@ public class ConsultationTerminal {
     private boolean aiRecommendations = false;
     private boolean medicineEntered = false;
     private boolean prescriptionLineModified = false;
+    private boolean prescriptionLineRemoved = false;
+    private boolean prescriptionReadyToSign = false;
+    private boolean medicalPrescriptionEditionEnded = false;
 
 
     /**
@@ -158,13 +163,90 @@ public class ConsultationTerminal {
      */
     public void modifyDoseInLine(ProductID prodID, float newDose)
             throws ProductNotInPrescriptionException, MedicalPrescriptionException, PosologyException, ProceduralException {
-       if(!medicineEntered)
-           throw new ProceduralException("There was not entered the Medicine with Guidelines");
+        if (!medicineEntered)
+            throw new ProceduralException("There was not entered the Medicine with Guidelines");
         medicalPrescription.modifyDoseInLine(prodID, newDose);
         prescriptionLineModified = true;
         showPrescriptionLineModified();
     }
 
+    /**
+     * Deletes the line of the medical prescription of the prodID of the treatment
+     *
+     * @param prodID the productID
+     * @throws ProductNotInPrescriptionException if the product is no in the prescription
+     * @throws ProceduralException               if there is not a medical prescription in process of edition
+     */
+    public void removeLine(ProductID prodID) throws
+            ProductNotInPrescriptionException, MedicalPrescriptionException, ProceduralException {
+        if (!prescriptionLineModified)
+            throw new ProceduralException("There was not modified the dose in line");
+        medicalPrescription.removeLine(prodID);
+        prescriptionLineRemoved = true;
+        showRemovedLine();
+    }
+
+    /**
+     * Introduce the date of the ending of the treatment
+     *
+     * @param date the date
+     * @throws IncorrectEndingDateException if the date is not correct
+     * @throws ProceduralException          if there is not a prescription line removed
+     */
+    public void enterTreatmentEndingDate(Date date) throws
+            IncorrectEndingDateException, ProceduralException, MedicalPrescriptionException {
+        if (!prescriptionLineRemoved)
+            throw new ProceduralException("There was not a remove line");
+
+        if (incorrectDate(date))
+            throw new IncorrectEndingDateException("The date is incorrect ");
+
+        medicalPrescription.setEndDate(date);
+
+        prescriptionReadyToSign = true;
+        showMedicalPrescriptionReadyToSign();
+    }
+
+    /**
+     * @throws ProceduralException if there is no treatment ending date
+     */
+    public void finishMedicalPrescriptionEdition() throws ProceduralException {
+        if (!prescriptionReadyToSign)
+            throw new ProceduralException("There is not treatment ending date");
+
+        medicalPrescriptionEditionEnded = true;
+        showHCEandEReceiptRead();
+    }
+
+    /**
+     * The doctor sign with his eSignature
+     *
+     * @throws eSignatureException if there is an error with the eSignature
+     * @throws ProceduralException if the prescription edition has not ended
+     */
+    public void stampeeSignature() throws eSignatureException, ProceduralException {
+        if (!medicalPrescriptionEditionEnded)
+            throw new ProceduralException("There was not enter a treatment ending date");
+        if (this.doctorSignature == null)
+            throw new eSignatureException("There is an error with the eSignature");
+
+        doctorSignature.getDigitalSignature();
+
+        medicalPrescriptionEditionEnded = true;
+
+        showMedicalPrescriptionPendingValidation();
+    }
+
+
+    //Additional functions
+
+    private boolean incorrectDate(Date date) {
+        if (date == null) return true;
+
+        Date today = new Date();
+
+        return !date.after(today);
+    }
 
     // Helpers, those will be modified as needed on the real implementation
 
@@ -199,8 +281,28 @@ public class ConsultationTerminal {
         System.out.println("Prescription line modification completed");
     }
 
-    private void showPrescriptionLineModified(){
+    private void showPrescriptionLineModified() {
         System.out.println("Prescription line modified");
+    }
+
+    private void showRemovedLine() {
+        System.out.println("Prescription line removed");
+    }
+
+    private void showMedicalPrescriptionReadyToSign() {
+        System.out.println("Prescription ready to firm");
+    }
+
+    private void showHCEandEReceiptRead() {
+        System.out.println("Screen of just reading of HCE and e-receipt");
+    }
+
+    private void showMedicalPrescriptionPendingValidation() {
+        System.out.println("Medical prescription is waiting fot validation");
+    }
+
+    private void showMedicalPrescription() {
+        System.out.println(this.medicalPrescription.toString());
     }
 
     // Injection setters
@@ -213,7 +315,7 @@ public class ConsultationTerminal {
         this.healthNationalService = healthNationalService;
     }
 
-    //Getters
+    // Getters
 
     public HealthNationalService getHealthNationalService() {
         return healthNationalService;
@@ -225,5 +327,10 @@ public class ConsultationTerminal {
 
     public MedicalHistory getMedicalHistory() {
         return medicalHistory;
+    }
+
+    // Setters
+    public void setDoctorSignature(DigitalSignature digitalSignature) {
+        this.doctorSignature = digitalSignature;
     }
 }
