@@ -21,6 +21,8 @@ class ConsultationTerminalTest {
     private Date validDate;
     private DigitalSignature digitalSignature;
 
+    private final float newDose = 2;
+
     // Services
     private HealthNationalServiceMock healthNationalService;
     private DecisionMakingAIMock decisionMakingAI;
@@ -44,6 +46,8 @@ class ConsultationTerminalTest {
 
     }
 
+
+
     // ---- NOT EXCEPTIONS TESTS ----
 
     @Test
@@ -58,9 +62,8 @@ class ConsultationTerminalTest {
 
     @Test
     @DisplayName("test enter medical assessment in history: step 2")
-    void medicalAssesment() throws Exception {
-        // Step 1
-        consultationTerminal.initRevision(healthCardID, illness);
+    void medicalAssessment() throws Exception {
+        reachState(1);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.enterMedicalAssessmentInHistory("assessment"));
     }
@@ -68,9 +71,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test Medical Prescription Edition: step 3")
     void initMedicalPrescriptionEdition() throws Exception {
-        // Step 1, 2
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
+        reachState(2);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.initMedicalPrescriptionEdition());
     }
@@ -78,10 +79,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test call Decision MakingAI: step 4")
     void callDecisionMakingAI() throws Exception {
-        // Step 1, 2, 3
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
+        reachState(3);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.callDecisionMakingAI());
     }
@@ -89,11 +87,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test ask AI For Suggest: step 5")
     void askAIForSuggest() throws Exception {
-        // Step 1, 2, 3, 4
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
+       reachState(4);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.askAIForSuggest("prompt"));
     }
@@ -101,12 +95,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test extract Guidelines From Sugg: step 6")
     void extractGuidelinesFromSugg() throws Exception {
-        // Step 1, 2, 3, 4, 5
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
+        reachState(5);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.extractGuidelinesFromSugg());
     }
@@ -114,13 +103,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test enter Medicine With Guidelines: step 7")
     void enterMedicineWithGuidelines() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
+        reachState(6);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.enterMedicineWithGuidelines(productID, instructions));
     }
@@ -128,14 +111,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test modify dose in line: step 8")
     void modifyDoseInLine() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
+        reachState(7);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.modifyDoseInLine(productID, 2));
     }
@@ -143,15 +119,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test remove line: step 9")
     void removeLine() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7, 8
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
+        reachState(8);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.removeLine(productID));
     }
@@ -159,16 +127,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test enter treatment end date: step 10")
     void enterTreatmentEndingDate() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7, 8, 9
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
+        reachState(9);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.enterTreatmentEndingDate(validDate));
     }
@@ -176,17 +135,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test finish medical prescription edition: step 11")
     void finishMedicalPrescriptionEdition() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
-        consultationTerminal.enterTreatmentEndingDate(validDate);
+        reachState(10);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.finishMedicalPrescriptionEdition());
     }
@@ -194,18 +143,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test stamp eSignature: step 12")
     void stampeeSignature() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
-        consultationTerminal.enterTreatmentEndingDate(validDate);
-        consultationTerminal.finishMedicalPrescriptionEdition();
+        reachState(11);
         // Test
         consultationTerminal.setDoctorSignature(digitalSignature);
         assertDoesNotThrow(() -> consultationTerminal.stampeeSignature());
@@ -214,20 +152,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test send history and prescription: step 13")
     void sendHistoryAndPrescription() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
-        consultationTerminal.enterTreatmentEndingDate(validDate);
-        consultationTerminal.finishMedicalPrescriptionEdition();
-        consultationTerminal.setDoctorSignature(digitalSignature);
-        consultationTerminal.stampeeSignature();
+        reachState(12);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.sendHistoryAndPrescription());
     }
@@ -235,21 +160,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("test print medical prescription: step 14")
     void printMedicalPrescrip() throws Exception {
-        // Step 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
-        consultationTerminal.enterTreatmentEndingDate(validDate);
-        consultationTerminal.finishMedicalPrescriptionEdition();
-        consultationTerminal.setDoctorSignature(digitalSignature);
-        consultationTerminal.stampeeSignature();
-        consultationTerminal.sendHistoryAndPrescription();
+        reachState(13);
         // Test
         assertDoesNotThrow(() -> consultationTerminal.printMedicalPrescrip());
     }
@@ -282,8 +193,8 @@ class ConsultationTerminalTest {
     }
 
     @Test
-    @DisplayName("Check all exceptions on enter medical assesment in history")
-    void enterMedicalAssessmentInHistoryExceptions() {
+    @DisplayName("Check all procedural exceptions on enter medical assessment in history")
+    void enterMedicalAssessmentInHistoryProceduralExceptions() {
         // Procedural exception
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.enterMedicalAssessmentInHistory("assess")
@@ -292,14 +203,14 @@ class ConsultationTerminalTest {
 
     @Test
     @DisplayName("Check all exceptions on init Medical Prescription Edition")
-    void initMedicalPrescriptionEditionExceptions() throws Exception {
+    void initMedicalPrescriptionEditionProceduralExceptions() throws Exception {
         // Procedural exception before nothing
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.initMedicalPrescriptionEdition()
         );
 
         // Procedural exception before one step
-        consultationTerminal.initRevision(healthCardID, "illness");
+        reachState(1);
 
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.initMedicalPrescriptionEdition()
@@ -329,11 +240,9 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions on call Decision Making AI")
     void callDecisionMakingAIExceptions() throws Exception {
-        // AI Exception
-        consultationTerminal.initRevision(healthCardID, "illness");
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
+        reachState(3);
 
+        // AI Exception
         decisionMakingAI.setFailWithAIException(true);
         assertThrows(AIException.class, () ->
                 consultationTerminal.callDecisionMakingAI()
@@ -368,10 +277,8 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions on ask for ai suggest")
     void askAIForSuggestExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, "illness");
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
+        reachState(4);
+        // Bad prompt exception
         assertThrows(BadPromptException.class, () ->
                 consultationTerminal.askAIForSuggest(null)
         );
@@ -410,11 +317,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions extract guide lines from suggestions")
     void extractGuidelinesFromSuggExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, "illness");
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
+        reachState(5);
         decisionMakingAI.setFailWithsuggestions(true);
         // Bad prompt exception
         assertThrows(BadPromptException.class, () ->
@@ -460,12 +363,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions from enter Medicine With Guidelines")
     void enterMedicineWithGuidelinesExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
+        reachState(6);
         String[] instruct = new String[]{""};
 
         // Incorrect Taking guidelines exception
@@ -484,56 +382,50 @@ class ConsultationTerminalTest {
     void enterModifyDoseInLineProceduralExceptions() throws Exception {
         // Procedural exception before nothing
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
 
         // Procedural exception before one step
         consultationTerminal.initRevision(healthCardID, "illness");
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
         // Procedural exception before two steps
         consultationTerminal.enterMedicalAssessmentInHistory("assessment");
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
         // Procedural exception before three steps
         consultationTerminal.initMedicalPrescriptionEdition();
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
         // Procedural exception before four steps
         consultationTerminal.callDecisionMakingAI();
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
         // Procedural exception before five steps
         consultationTerminal.askAIForSuggest("prompt");
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
         // Procedural exception before six steps
         consultationTerminal.extractGuidelinesFromSugg();
         assertThrows(ProceduralException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID, 2)
+                consultationTerminal.modifyDoseInLine(productID, newDose)
         );
     }
 
     @Test
     @DisplayName("Check other exceptions from enter modify dose in line")
     void enterModifyDoseInLineExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-
+        reachState(7);
         ProductID productID1 = new ProductID("012345678901");
+
         // Product Not In Prescription Exception
         assertThrows(ProductNotInPrescriptionException.class, () ->
-                consultationTerminal.modifyDoseInLine(productID1, 2)
+                consultationTerminal.modifyDoseInLine(productID1, newDose)
         );
 
     }
@@ -586,16 +478,9 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions from remove line")
     void enterRemoveLineExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-
+        reachState(8);
         ProductID productID2 = new ProductID("999999999999");
+
         // Product Not In Prescription Exception
         assertThrows(ProductNotInPrescriptionException.class, () ->
                 consultationTerminal.removeLine(productID2)
@@ -655,18 +540,10 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions from enter treatment ending date")
     void enterEnterTreatmentEndingDateExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2.0f);
-        consultationTerminal.removeLine(productID);
-
+        reachState(9);
         // Date of a day before
         Date pastDate = new Date(System.currentTimeMillis() - 3600000 * 24);
+
         // Incorrect date
         assertThrows(IncorrectEndingDateException.class, () ->
                 consultationTerminal.enterTreatmentEndingDate(pastDate)
@@ -717,7 +594,7 @@ class ConsultationTerminalTest {
                 consultationTerminal.finishMedicalPrescriptionEdition()
         );
         // Procedural exception before eight steps
-        consultationTerminal.modifyDoseInLine(productID, 2);
+        consultationTerminal.modifyDoseInLine(productID, newDose);
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.finishMedicalPrescriptionEdition()
         );
@@ -772,7 +649,7 @@ class ConsultationTerminalTest {
                 consultationTerminal.stampeeSignature()
         );
         // Procedural exception before eight steps
-        consultationTerminal.modifyDoseInLine(productID, 2);
+        consultationTerminal.modifyDoseInLine(productID, newDose);
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.stampeeSignature()
         );
@@ -791,18 +668,9 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions from stamp eSignature Exceptions")
     void enterStampeeSignatureExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
-        consultationTerminal.enterTreatmentEndingDate(validDate);
-        consultationTerminal.finishMedicalPrescriptionEdition();
+        reachState(11);
 
+        // eSignature exception
         assertThrows(eSignatureException.class, () ->
                 consultationTerminal.stampeeSignature()
         );
@@ -852,7 +720,7 @@ class ConsultationTerminalTest {
                 consultationTerminal.sendHistoryAndPrescription()
         );
         // Procedural exception before eight steps
-        consultationTerminal.modifyDoseInLine(productID, 2);
+        consultationTerminal.modifyDoseInLine(productID, newDose);
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.sendHistoryAndPrescription()
         );
@@ -876,19 +744,7 @@ class ConsultationTerminalTest {
     @Test
     @DisplayName("Check other exceptions from send history and prescription")
     void sendHistoryAndPrescriptionExceptions() throws Exception {
-        consultationTerminal.initRevision(healthCardID, illness);
-        consultationTerminal.enterMedicalAssessmentInHistory("assessment");
-        consultationTerminal.initMedicalPrescriptionEdition();
-        consultationTerminal.callDecisionMakingAI();
-        consultationTerminal.askAIForSuggest("prompt");
-        consultationTerminal.extractGuidelinesFromSugg();
-        consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
-        consultationTerminal.modifyDoseInLine(productID, 2);
-        consultationTerminal.removeLine(productID);
-        consultationTerminal.enterTreatmentEndingDate(validDate);
-        consultationTerminal.finishMedicalPrescriptionEdition();
-        consultationTerminal.setDoctorSignature(digitalSignature);
-        consultationTerminal.stampeeSignature();
+        reachState(12);
 
         // Connect exception
         healthNationalService.setFailWithConnectException(true);
@@ -962,7 +818,7 @@ class ConsultationTerminalTest {
                 consultationTerminal.printMedicalPrescrip()
         );
         // Procedural exception before eight steps
-        consultationTerminal.modifyDoseInLine(productID, 2);
+        consultationTerminal.modifyDoseInLine(productID, newDose);
         assertThrows(ProceduralException.class, () ->
                 consultationTerminal.printMedicalPrescrip()
         );
@@ -989,4 +845,23 @@ class ConsultationTerminalTest {
         );
     }
 
+    // Helper method to fast-forward the state
+    private void reachState(int step) throws Exception {
+        if (step >= 1) consultationTerminal.initRevision(healthCardID, illness);
+        if (step >= 2) consultationTerminal.enterMedicalAssessmentInHistory("assessment");
+        if (step >= 3) consultationTerminal.initMedicalPrescriptionEdition();
+        if (step >= 4) consultationTerminal.callDecisionMakingAI();
+        if (step >= 5) consultationTerminal.askAIForSuggest("prompt");
+        if (step >= 6) consultationTerminal.extractGuidelinesFromSugg();
+        if (step >= 7) consultationTerminal.enterMedicineWithGuidelines(productID, instructions);
+        if (step >= 8) consultationTerminal.modifyDoseInLine(productID, newDose);
+        if (step >= 9) consultationTerminal.removeLine(productID);
+        if (step >= 10) consultationTerminal.enterTreatmentEndingDate(validDate);
+        if (step >= 11) consultationTerminal.finishMedicalPrescriptionEdition();
+        if (step >= 12) {
+            consultationTerminal.setDoctorSignature(digitalSignature);
+            consultationTerminal.stampeeSignature();
+        }
+        if (step >= 13) consultationTerminal.sendHistoryAndPrescription();
+    }
 }
